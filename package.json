@@ -1,0 +1,62 @@
+{
+	"name": "radon-dec-plugin",
+	"displayName": "radon-decomposition-plugin",
+	"description": "A Plugin for invoking the RADON decomposition tool",
+	"version": "0.0.1",
+	"publisher": "radon",
+	"engines": {
+		"vscode": "^1.45.0"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/radon-h2020/radon-decomposition-plugin.git"
+	},
+	"categories": [
+		"Other"
+	],
+	"activationEvents": [
+		"onCommand:radon-dec-plugin.optimize"
+	],
+	"main": "./out/extension.js",
+	"contributes": {
+		"menus": {
+			"explorer/context": [
+				{
+					"when": "resourceLangId == yaml",
+					"command": "radon-dec-plugin.optimize",
+					"group": "myGroup@1"
+				}
+			]
+		},
+		"commands": [
+			{
+				"command": "radon-dec-plugin.optimize",
+				"title": "Optimize"
+			}
+		]
+	},
+	"scripts": {
+		"vscode:prepublish": "npm run compile",
+		"compile": "tsc -p ./",
+		"lint": "eslint src --ext ts",
+		"watch": "tsc -watch -p ./",
+		"pretest": "npm run compile && npm run lint"
+	},
+	"devDependencies": {
+		"@types/glob": "^7.1.1",
+		"@types/mocha": "^7.0.2",
+		"@types/node": "^13.11.0",
+		"@types/vscode": "^1.45.0",
+		"@typescript-eslint/eslint-plugin": "^2.30.0",
+		"@typescript-eslint/parser": "^2.30.0",
+		"eslint": "^6.8.0",
+		"glob": "^7.1.6",
+		"mocha": "^7.1.2",
+		"typescript": "^3.8.3"
+	},
+	"dependencies": {
+		"@types/uuid": "^7.0.3",
+		"form-data": "^3.0.0",
+		"uuid": "^8.0.0"
+	}
+}
