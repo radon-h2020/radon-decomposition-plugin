@@ -2,7 +2,7 @@
 	"name": "radon-dec-plugin",
 	"displayName": "RADON Decomposition Plugin",
 	"description": "A Plugin for invoking the RADON decomposition tool",
-	"version": "0.0.2",
+	"version": "0.0.3",
 	"publisher": "radon",
 	"engines": {
 		"vscode": "^1.45.0"
@@ -23,12 +23,12 @@
 		"menus": {
 			"explorer/context": [
 				{
-					"when": "resourceLangId == yaml",
+					"when": "resourceExtname == .tosca",
 					"command": "radon-dec-plugin.decompose",
 					"group": "myGroup@1"
 				},
 				{
-					"when": "resourceLangId == yaml",
+					"when": "resourceExtname == .tosca",
 					"command": "radon-dec-plugin.optimize",
 					"group": "myGroup@1"
 				}
