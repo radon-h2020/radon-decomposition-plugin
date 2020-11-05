@@ -2,7 +2,7 @@
 	"name": "radon-dec-plugin",
 	"displayName": "RADON Decomposition Plugin",
 	"description": "A Plugin for invoking the RADON decomposition tool",
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"publisher": "radon",
 	"engines": {
 		"vscode": "^1.45.0"
@@ -15,6 +15,7 @@
 		"Other"
 	],
 	"activationEvents": [
+		"onCommand:radon-dec-plugin.decompose",
 		"onCommand:radon-dec-plugin.optimize"
 	],
 	"main": "./out/extension.js",
@@ -23,12 +24,21 @@
 			"explorer/context": [
 				{
 					"when": "resourceLangId == yaml",
+					"command": "radon-dec-plugin.decompose",
+					"group": "myGroup@1"
+				},
+				{
+					"when": "resourceLangId == yaml",
 					"command": "radon-dec-plugin.optimize",
 					"group": "myGroup@1"
 				}
 			]
 		},
 		"commands": [
+			{
+				"command": "radon-dec-plugin.decompose",
+				"title": "Decompose"
+			},
 			{
 				"command": "radon-dec-plugin.optimize",
 				"title": "Optimize"
@@ -52,7 +62,8 @@
 		"eslint": "^6.8.0",
 		"glob": "^7.1.6",
 		"mocha": "^7.1.2",
-		"typescript": "^3.8.3"
+		"typescript": "^3.8.3",
+		"lodash": ">=4.17.19"
 	},
 	"dependencies": {
 		"@types/uuid": "^7.0.3",
