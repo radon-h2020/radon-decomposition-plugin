@@ -36,7 +36,7 @@ export function activate(context: vscode.ExtensionContext) {
 					reject(response);
 				}
 			});
-		}).then((extraInfo) => {
+		}).then((extraInfo: any) => {
 			return new Promise((resolve, reject) => {
 				// Decompose the architecture of the model
 				decomposeModel(serverConfig, tempName, (response) => {
@@ -49,7 +49,7 @@ export function activate(context: vscode.ExtensionContext) {
 					}
 				});
 			});
-		}).then((extraInfo) => {
+		}).then((extraInfo: any) => {
 			return new Promise((resolve, reject) => {
 				// Download the resultant model from the server
 				downloadFile(serverConfig, tempName, (response) => {
@@ -63,7 +63,7 @@ export function activate(context: vscode.ExtensionContext) {
 					}
 				});
 			});
-		}).then((extraInfo) => {
+		}).then((extraInfo: any) => {
 			// Clean up the server and show extra information
 			deleteFile(serverConfig, tempName, (response) => {
 				console.info('Architecture decomposition of ' + modelName + ' complete');
@@ -95,7 +95,7 @@ export function activate(context: vscode.ExtensionContext) {
 					reject(response);
 				}
 			});
-		}).then((extraInfo) => {
+		}).then((extraInfo: any) => {
 			return new Promise((resolve, reject) => {
 				// Optimize the deployment of the model
 				optimizeModel(serverConfig, tempName, (response) => {
@@ -115,7 +115,7 @@ export function activate(context: vscode.ExtensionContext) {
 					}
 				});
 			});
-		}).then((extraInfo) => {
+		}).then((extraInfo: any) => {
 			return new Promise((resolve, reject) => {
 				// Download the resultant model from the server
 				downloadFile(serverConfig, tempName, (response) => {
@@ -129,11 +129,12 @@ export function activate(context: vscode.ExtensionContext) {
 					}
 				});
 			});
-		}).then((extraInfo) => {
+		}).then((extraInfo: any) => {
 			// Clean up the server and show extra information
 			deleteFile(serverConfig, tempName, (response) => {
 				console.info('Deployment optimization of ' + modelName + ' complete');
 				console.info(JSON.stringify(extraInfo, null, 2));
+				console.info('Total operating cost per year: ' + extraInfo.total_cost * 24 * 356);
 			});
 		}).catch((reason) => {
 			// Print the reason if a request fails or an error occurs
