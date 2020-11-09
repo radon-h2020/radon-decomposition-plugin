@@ -10,6 +10,8 @@ import * as fs from 'fs';
 import * as FormData from 'form-data';
 import * as http from 'http';
 
+let underProcessing: string[] = [];
+
 /**
  * An exported function for activating the decomposition plugin
  */
@@ -20,6 +22,12 @@ export function activate(context: vscode.ExtensionContext) {
 	// Register the 'decompose' command
 	let decompose = vscode.commands.registerCommand('radon-dec-plugin.decompose', (uri: vscode.Uri) => {
 		const modelPath = uri.path;
+		if (underProcessing.includes(modelPath)) {
+			console.info('The model is already under processing. Please wait...');
+			return;
+		}
+		underProcessing.push(modelPath);
+
 		const modelName = path.basename(modelPath);
 		console.info('Start architecture decomposition of ' + modelName);
 
@@ -69,10 +77,12 @@ export function activate(context: vscode.ExtensionContext) {
 			deleteFile(serverConfig, tempName, (response) => {
 				console.info('Architecture decomposition of ' + modelName + ' complete');
 				console.info(JSON.stringify(extraInfo, null, 2));
+				underProcessing.splice(underProcessing.indexOf(modelPath));
 			});
 		}).catch((reason) => {
 			// Print the reason if a request fails or an error occurs
 			printReason(reason);
+			underProcessing.splice(underProcessing.indexOf(modelPath));
 		});
 	});
 	context.subscriptions.push(decompose);
@@ -80,6 +90,12 @@ export function activate(context: vscode.ExtensionContext) {
 	// Register the 'optimize' command
 	let optimize = vscode.commands.registerCommand('radon-dec-plugin.optimize', (uri: vscode.Uri) => {
 		const modelPath = uri.path;
+		if (underProcessing.includes(modelPath)) {
+			console.info('The model is already under processing. Please wait...');
+			return;
+		}
+		underProcessing.push(modelPath);
+
 		const modelName = path.basename(modelPath);
 		console.info('Start deployment optimization of ' + modelName);
 
@@ -137,10 +153,12 @@ export function activate(context: vscode.ExtensionContext) {
 				console.info('Deployment optimization of ' + modelName + ' complete');
 				console.info(JSON.stringify(extraInfo, null, 2));
 				console.info('Total operating cost per year: ' + extraInfo.total_cost * 24 * 356);
+				underProcessing.splice(underProcessing.indexOf(modelPath));
 			});
 		}).catch((reason) => {
 			// Print the reason if a request fails or an error occurs
 			printReason(reason);
+			underProcessing.splice(underProcessing.indexOf(modelPath));
 		});
 	});
 	context.subscriptions.push(optimize);
