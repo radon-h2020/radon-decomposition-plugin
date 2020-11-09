@@ -55,6 +55,7 @@ export function activate(context: vscode.ExtensionContext) {
 				downloadFile(serverConfig, tempName, (response) => {
 					if (response.statusCode === 200) {
 						console.info('Successfully downloaded the resultant model from the server');
+						backUpFile(modelPath);
 						response.pipe(fs.createWriteStream(modelPath));
 						resolve(extraInfo);
 					} else {
@@ -121,6 +122,7 @@ export function activate(context: vscode.ExtensionContext) {
 				downloadFile(serverConfig, tempName, (response) => {
 					if (response.statusCode === 200) {
 						console.info('Successfully downloaded the resultant model from the server');
+						backUpFile(modelPath);
 						response.pipe(fs.createWriteStream(modelPath));
 						resolve(extraInfo);
 					} else {
@@ -262,6 +264,22 @@ function optimizeModel(serverConfig: any, fileName: string, callback?: (res: htt
 		callback
 	);
 	request.end();
+}
+
+/**
+ * Back up a file in place
+ */
+function backUpFile(filePath: string) {
+	for (let i = 1; i < Number.MAX_SAFE_INTEGER; i++) {
+		let backupPath = filePath + '.bkp';
+		if (i > 1) {
+			backupPath = backupPath + i;
+		}
+		if (!fs.existsSync(backupPath)) {
+			fs.copyFileSync(filePath, backupPath);
+			break;
+		}
+	}
 }
 
 /**

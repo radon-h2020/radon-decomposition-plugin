@@ -2,7 +2,7 @@
 	"name": "radon-dec-plugin",
 	"displayName": "RADON Decomposition Plugin",
 	"description": "A Plugin for invoking the RADON decomposition tool",
-	"version": "0.0.3",
+	"version": "0.0.4",
 	"publisher": "radon",
 	"engines": {
 		"vscode": "^1.45.0"
