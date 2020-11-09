@@ -10,9 +10,6 @@ import * as fs from 'fs';
 import * as FormData from 'form-data';
 import * as http from 'http';
 
-const SERVER_DOMAIN_NAME = 'ec2-108-128-104-167.eu-west-1.compute.amazonaws.com';
-const SERVER_PUBLIC_PORT = '9000';
-
 /**
  * An exported function for activating the decomposition plugin
  */
@@ -26,10 +23,11 @@ export function activate(context: vscode.ExtensionContext) {
 		const modelName = path.basename(modelPath);
 		console.info('Start architecture decomposition of ' + modelName);
 
+		const serverConfig = getServerConfig();
 		const tempName = generateTempName(modelName);
 		new Promise((resolve, reject) => {
 			// Upload the original model to the server
-			uploadFile(modelPath, tempName, (response) => {
+			uploadFile(serverConfig, modelPath, tempName, (response) => {
 				if (response.statusCode === 200) {
 					console.info('Successfully uploaded the original model to the server');
 					resolve({});
@@ -41,7 +39,7 @@ export function activate(context: vscode.ExtensionContext) {
 		}).then((extraInfo) => {
 			return new Promise((resolve, reject) => {
 				// Decompose the architecture of the model
-				decomposeModel(tempName, (response) => {
+				decomposeModel(serverConfig, tempName, (response) => {
 					if (response.statusCode === 200) {
 						console.info('Successfully decomposed the architecture of the model');
 						resolve(extraInfo);
@@ -54,7 +52,7 @@ export function activate(context: vscode.ExtensionContext) {
 		}).then((extraInfo) => {
 			return new Promise((resolve, reject) => {
 				// Download the resultant model from the server
-				downloadFile(tempName, (response) => {
+				downloadFile(serverConfig, tempName, (response) => {
 					if (response.statusCode === 200) {
 						console.info('Successfully downloaded the resultant model from the server');
 						response.pipe(fs.createWriteStream(modelPath));
@@ -67,7 +65,7 @@ export function activate(context: vscode.ExtensionContext) {
 			});
 		}).then((extraInfo) => {
 			// Clean up the server and show extra information
-			deleteFile(tempName, (response) => {
+			deleteFile(serverConfig, tempName, (response) => {
 				console.info('Architecture decomposition of ' + modelName + ' complete');
 				console.info(JSON.stringify(extraInfo, null, 2));
 			});
@@ -84,10 +82,11 @@ export function activate(context: vscode.ExtensionContext) {
 		const modelName = path.basename(modelPath);
 		console.info('Start deployment optimization of ' + modelName);
 
+		const serverConfig = getServerConfig();
 		const tempName = generateTempName(modelName);
 		new Promise((resolve, reject) => {
 			// Upload the original model to the server
-			uploadFile(modelPath, tempName, (response) => {
+			uploadFile(serverConfig, modelPath, tempName, (response) => {
 				if (response.statusCode === 200) {
 					console.info('Successfully uploaded the original model to the server');
 					resolve({});
@@ -99,7 +98,7 @@ export function activate(context: vscode.ExtensionContext) {
 		}).then((extraInfo) => {
 			return new Promise((resolve, reject) => {
 				// Optimize the deployment of the model
-				optimizeModel(tempName, (response) => {
+				optimizeModel(serverConfig, tempName, (response) => {
 					if (response.statusCode === 200) {
 						let text = '';
 						response.on('data', (chunk) => {
@@ -119,7 +118,7 @@ export function activate(context: vscode.ExtensionContext) {
 		}).then((extraInfo) => {
 			return new Promise((resolve, reject) => {
 				// Download the resultant model from the server
-				downloadFile(tempName, (response) => {
+				downloadFile(serverConfig, tempName, (response) => {
 					if (response.statusCode === 200) {
 						console.info('Successfully downloaded the resultant model from the server');
 						response.pipe(fs.createWriteStream(modelPath));
@@ -132,7 +131,7 @@ export function activate(context: vscode.ExtensionContext) {
 			});
 		}).then((extraInfo) => {
 			// Clean up the server and show extra information
-			deleteFile(tempName, (response) => {
+			deleteFile(serverConfig, tempName, (response) => {
 				console.info('Deployment optimization of ' + modelName + ' complete');
 				console.info(JSON.stringify(extraInfo, null, 2));
 			});
@@ -150,6 +149,17 @@ export function activate(context: vscode.ExtensionContext) {
 export function deactivate() {}
 
 /**
+ * Get the server configuration
+ */
+function getServerConfig(): any {
+	const pluginConfig = vscode.workspace.getConfiguration('radon-dec-plugin');
+	return {
+		domainName: pluginConfig.get<string>('server.domainName'),
+		publicPort: pluginConfig.get<number>('server.publicPort')
+	};
+}
+
+/**
  * Generate a temporary name for a file
  */
 function generateTempName(fileName: string): string {
@@ -161,13 +171,13 @@ function generateTempName(fileName: string): string {
 /**
  * Upload a file to the server
  */
-function uploadFile(uploadPath: string, fileName: string, callback?: (res: http.IncomingMessage) => void) {
+function uploadFile(serverConfig: any, uploadPath: string, fileName: string, callback?: (res: http.IncomingMessage) => void) {
 	const formData = new FormData();
 	formData.append('file', fs.createReadStream(uploadPath));
 	const request = http.request(
 		{
-			host: SERVER_DOMAIN_NAME,
-			port: SERVER_PUBLIC_PORT,
+			host: serverConfig.domainName,
+			port: serverConfig.publicPort,
 			path: '/files/' + fileName,
 			method: 'POST',
 			headers: formData.getHeaders()
@@ -180,11 +190,11 @@ function uploadFile(uploadPath: string, fileName: string, callback?: (res: http.
 /**
  * Download a file from the server
  */
-function downloadFile(fileName: string, callback?: (res: http.IncomingMessage) => void) {
+function downloadFile(serverConfig: any, fileName: string, callback?: (res: http.IncomingMessage) => void) {
 	const request = http.request(
 		{
-			host: SERVER_DOMAIN_NAME,
-			port: SERVER_PUBLIC_PORT,
+			host: serverConfig.domainName,
+			port: serverConfig.publicPort,
 			path: '/files/' + fileName,
 			method: 'GET',
 			headers: {
@@ -199,11 +209,11 @@ function downloadFile(fileName: string, callback?: (res: http.IncomingMessage) =
 /**
  * Delete a file in the server
  */
-function deleteFile(fileName: string, callback?: (res: http.IncomingMessage) => void) {
+function deleteFile(serverConfig: any, fileName: string, callback?: (res: http.IncomingMessage) => void) {
 	const request = http.request(
 		{
-			host: SERVER_DOMAIN_NAME,
-			port: SERVER_PUBLIC_PORT,
+			host: serverConfig.domainName,
+			port: serverConfig.publicPort,
 			path: '/files/' + fileName,
 			method: 'DELETE',
 			headers: {
@@ -218,11 +228,11 @@ function deleteFile(fileName: string, callback?: (res: http.IncomingMessage) => 
 /**
  * Decompose the architecture of a RADON model
  */
-function decomposeModel(fileName: string, callback?: (res: http.IncomingMessage) => void) {
+function decomposeModel(serverConfig: any, fileName: string, callback?: (res: http.IncomingMessage) => void) {
 	const request = http.request(
 		{
-			host: SERVER_DOMAIN_NAME,
-			port: SERVER_PUBLIC_PORT,
+			host: serverConfig.domainName,
+			port: serverConfig.publicPort,
 			path: '/dec-tool/decompose?filename=' + fileName,
 			method: 'PATCH',
 			headers: {
@@ -237,11 +247,11 @@ function decomposeModel(fileName: string, callback?: (res: http.IncomingMessage)
 /**
  * Optimize the deployment of a RADON model
  */
-function optimizeModel(fileName: string, callback?: (res: http.IncomingMessage) => void) {
+function optimizeModel(serverConfig: any, fileName: string, callback?: (res: http.IncomingMessage) => void) {
 	const request = http.request(
 		{
-			host: SERVER_DOMAIN_NAME,
-			port: SERVER_PUBLIC_PORT,
+			host: serverConfig.domainName,
+			port: serverConfig.publicPort,
 			path: '/dec-tool/optimize?filename=' + fileName,
 			method: 'PATCH',
 			headers: {

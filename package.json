@@ -20,6 +20,21 @@
 	],
 	"main": "./out/extension.js",
 	"contributes": {
+		"configuration": {
+			"title": "RADON Decomposition",
+			"properties": {
+				"radon-dec-plugin.server.domainName": {
+					"type": "string",
+					"default": "ec2-108-128-104-167.eu-west-1.compute.amazonaws.com",
+					"description": "Specifies the domain name of the server hosting the decomposition tool."
+				},
+				"radon-dec-plugin.server.publicPort": {
+					"type": "number",
+					"default": 9000,
+					"description": "Specifies the public port of the server hosting the decomposition tool."
+				}
+			}
+		},
 		"menus": {
 			"explorer/context": [
 				{
