@@ -47,6 +47,18 @@
 					"command": "radon-dec-plugin.optimize",
 					"group": "myGroup@1"
 				}
+			],
+			"editor/context": [
+				{
+					"when": "resourceExtname == .tosca",
+					"command": "radon-dec-plugin.decompose",
+					"group": "myGroup@1"
+				},
+				{
+					"when": "resourceExtname == .tosca",
+					"command": "radon-dec-plugin.optimize",
+					"group": "myGroup@1"
+				}
 			]
 		},
 		"commands": [
