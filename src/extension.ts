@@ -14,13 +14,14 @@ import * as Stream from 'stream';
 const DECOMPOSITION_FEATURE_ID = 0;
 const OPTIMIZATION_FEATURE_ID = 1;
 
+const outputChannel = vscode.window.createOutputChannel("RADON Decomposition");
 const underProcessing: string[] = [];
 
 /**
  * An exported function for activating the decomposition plugin
  */
 export function activate(context: vscode.ExtensionContext) {
-	console.info('The RADON decomposition plugin is now active!');
+	outputChannel.appendLine('The RADON decomposition plugin is now active!');
 
 	// Register the 'decompose' command
 	const decompose = vscode.commands.registerCommand('radon-dec-plugin.decompose', (uri: vscode.Uri) => {
@@ -44,9 +45,10 @@ export function deactivate() { }
  * Run a specific procedure
  */
 async function runProcedure(featureId: number, uri: vscode.Uri) {
+	outputChannel.show();
 	const modelPath = uri.path;
 	if (underProcessing.includes(modelPath)) {
-		console.info('The model is already under processing. Please wait...');
+		outputChannel.appendLine('The model is already under processing. Please wait...');
 		return;
 	}
 	underProcessing.push(modelPath);
@@ -56,10 +58,10 @@ async function runProcedure(featureId: number, uri: vscode.Uri) {
 	const tempName = generateTempName(modelName);
 	switch (featureId) {
 		case DECOMPOSITION_FEATURE_ID:
-			console.info('Start architecture decomposition of ' + modelName);
+			outputChannel.appendLine('Start architecture decomposition of ' + modelName);
 			break;
 		case OPTIMIZATION_FEATURE_ID:
-			console.info('Start deployment optimization of ' + modelName);
+			outputChannel.appendLine('Start deployment optimization of ' + modelName);
 			break;
 		default:
 			throw new Error("Unsupported feature Id: " + featureId);
@@ -72,9 +74,9 @@ async function runProcedure(featureId: number, uri: vscode.Uri) {
 		// Upload the original model to the server
 		try {
 			response = await uploadFile(serverConfig, modelPath, tempName);
-			console.info('Successfully uploaded the original model to the server');
+			outputChannel.appendLine('Successfully uploaded the original model to the server');
 		} catch (error) {
-			console.error('Failed to upload the original model to the server');
+			outputChannel.appendLine('Failed to upload the original model to the server');
 			throw error;
 		}
 
@@ -84,9 +86,9 @@ async function runProcedure(featureId: number, uri: vscode.Uri) {
 				try {
 					response = await decomposeModel(serverConfig, tempName);
 					output = JSON.parse(response.data.toString());
-					console.info('Successfully decomposed the architecture of the model');
+					outputChannel.appendLine('Successfully decomposed the architecture of the model');
 				} catch (error) {
-					console.error('Failed to decompose the architecture of the model');
+					outputChannel.appendLine('Failed to decompose the architecture of the model');
 					throw error;
 				}
 				break;
@@ -95,9 +97,9 @@ async function runProcedure(featureId: number, uri: vscode.Uri) {
 				try {
 					response = await optimizeModel(serverConfig, tempName);
 					output = JSON.parse(response.data.toString());
-					console.info('Successfully optimized the deployment of the model');
+					outputChannel.appendLine('Successfully optimized the deployment of the model');
 				} catch (error) {
-					console.error('Failed to optimize the deployment of the model');
+					outputChannel.appendLine('Failed to optimize the deployment of the model');
 					throw error;
 				}
 				break;
@@ -110,30 +112,30 @@ async function runProcedure(featureId: number, uri: vscode.Uri) {
 			response = await downloadFile(serverConfig, tempName);
 			backUpFile(modelPath);
 			writeFile(modelPath, response.data);
-			console.info('Successfully downloaded the resultant model from the server');
+			outputChannel.appendLine('Successfully downloaded the resultant model from the server');
 		} catch (error) {
-			console.error('Failed to download the resultant model from the server');
+			outputChannel.appendLine('Failed to download the resultant model from the server');
 			throw error;
 		}
 
 		switch (featureId) {
 			case DECOMPOSITION_FEATURE_ID:
 				// Print the output upon completion of decomposition
-				console.info('Architecture decomposition of ' + modelName + ' complete');
-				console.info(JSON.stringify(output, null, 2));
+				outputChannel.appendLine('Architecture decomposition of ' + modelName + ' complete');
+				outputChannel.appendLine(JSON.stringify(output, null, 2));
 				break;
 			case OPTIMIZATION_FEATURE_ID:
 				// Print the output upon completion of optimization
-				console.info('Deployment optimization of ' + modelName + ' complete');
-				console.info(JSON.stringify(output, null, 2));
-				console.info('Total operating cost per year: ' + output.total_cost * 24 * 356);
+				outputChannel.appendLine('Deployment optimization of ' + modelName + ' complete');
+				outputChannel.appendLine(JSON.stringify(output, null, 2));
+				outputChannel.appendLine('Total operating cost per year: ' + output.total_cost * 24 * 356);
 				break;
 			default:
 				throw new Error("Unsupported feature Id: " + featureId);
 		}
 	} catch (error) {
 		// Print the error upon failure of a request
-		console.error(JSON.stringify(error, null, 2));
+		outputChannel.appendLine(JSON.stringify(error, null, 2));
 	} finally {
 		// Delete the residual model from the server
 		try { await deleteFile(serverConfig, tempName); } catch { }
