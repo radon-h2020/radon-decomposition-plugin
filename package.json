@@ -2,7 +2,7 @@
 	"name": "radon-dec-plugin",
 	"displayName": "RADON Decomposition Plugin",
 	"description": "A Plugin for invoking the RADON decomposition tool",
-	"version": "0.0.4",
+	"version": "0.0.5",
 	"publisher": "radon",
 	"engines": {
 		"vscode": "^1.45.0"
@@ -16,7 +16,8 @@
 	],
 	"activationEvents": [
 		"onCommand:radon-dec-plugin.decompose",
-		"onCommand:radon-dec-plugin.optimize"
+		"onCommand:radon-dec-plugin.optimize",
+		"onCommand:radon-dec-plugin.enhance"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
@@ -40,24 +41,34 @@
 				{
 					"when": "resourceExtname == .tosca",
 					"command": "radon-dec-plugin.decompose",
-					"group": "myGroup@1"
+					"group": "myGroup@01"
 				},
 				{
 					"when": "resourceExtname == .tosca",
 					"command": "radon-dec-plugin.optimize",
-					"group": "myGroup@1"
+					"group": "myGroup@02"
+				},
+				{
+					"when": "resourceExtname == .tosca",
+					"command": "radon-dec-plugin.enhance",
+					"group": "myGroup@03"
 				}
 			],
 			"editor/context": [
 				{
 					"when": "resourceExtname == .tosca",
 					"command": "radon-dec-plugin.decompose",
-					"group": "myGroup@1"
+					"group": "myGroup@01"
 				},
 				{
 					"when": "resourceExtname == .tosca",
 					"command": "radon-dec-plugin.optimize",
-					"group": "myGroup@1"
+					"group": "myGroup@02"
+				},
+				{
+					"when": "resourceExtname == .tosca",
+					"command": "radon-dec-plugin.enhance",
+					"group": "myGroup@03"
 				}
 			]
 		},
@@ -69,6 +80,10 @@
 			{
 				"command": "radon-dec-plugin.optimize",
 				"title": "Optimize"
+			},
+			{
+				"command": "radon-dec-plugin.enhance",
+				"title": "Enhance"
 			}
 		]
 	},
