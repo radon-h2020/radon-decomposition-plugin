@@ -37,6 +37,12 @@ export function activate(context: vscode.ExtensionContext) {
 		runEnhancement(uri);
 	});
 	context.subscriptions.push(enhance);
+
+	// Register the 'consolidate' command
+	const consolidate = vscode.commands.registerCommand('radon-dec-plugin.consolidate', (uri: vscode.Uri) => {
+		runConsolidation(uri);
+	});
+	context.subscriptions.push(consolidate);
 }
 
 /**
@@ -274,6 +280,98 @@ async function runEnhancement(uri: vscode.Uri) {
 }
 
 /**
+ * Run assignment consolidation
+ */
+async function runConsolidation(uri: vscode.Uri) {
+	outputChannel.show();
+
+	// Check if the model is already under processing
+	const modelPath = uri.path;
+	if (underProcessing.includes(modelPath)) {
+		outputChannel.appendLine('The model is already under processing. Please wait...');
+		return;
+	}
+
+	// Gather necessary information
+	const serverConfig = getServerConfig();
+	const modelFileName = path.basename(modelPath);
+	const modelTempName = generateTempName(modelFileName);
+	let dataFileName = '';
+	const directoryPath = path.dirname(modelPath);
+	const directoryEntries = fs.readdirSync(directoryPath, { withFileTypes: true });
+	for (const entry of directoryEntries) {
+		if (entry.isFile() && entry.name.endsWith('.zip')) {
+			dataFileName = entry.name;
+		}
+	}
+	if (!dataFileName) {
+		outputChannel.appendLine('Cannot find the data file (.zip)');
+		return;
+	}
+	const dataPath = path.join(directoryPath, dataFileName);
+	const dataTempName = generateTempName(dataFileName);
+
+	// Start execution of the procedure
+	outputChannel.appendLine('Start assignment consolidation of ' + modelFileName);
+	underProcessing.push(modelPath);
+	try {
+		let response = null;
+		let output = null;
+
+		// Upload the model to the server
+		try {
+			response = await uploadFile(serverConfig, modelPath, modelTempName);
+			outputChannel.appendLine('Successfully uploaded the model to the server');
+		} catch (error) {
+			outputChannel.appendLine('Failed to upload the model to the server');
+			throw error;
+		}
+
+		// Upload the data to the server
+		try {
+			response = await uploadFile(serverConfig, dataPath, dataTempName);
+			outputChannel.appendLine('Successfully uploaded the data to the server');
+		} catch (error) {
+			outputChannel.appendLine('Failed to upload the data to the server');
+			throw error;
+		}
+
+		// Consolidate the assignment of the model
+		try {
+			response = await consolidateModel(serverConfig, modelTempName, dataTempName);
+			output = JSON.parse(response.data.toString());
+			outputChannel.appendLine('Successfully consolidated the assignment of the model');
+		} catch (error) {
+			outputChannel.appendLine('Failed to consolidate the assignment of the model');
+			throw error;
+		}
+
+		// Download the model from the server
+		try {
+			response = await downloadFile(serverConfig, modelTempName);
+			backUpFile(modelPath);
+			writeFile(modelPath, response.data);
+			outputChannel.appendLine('Successfully downloaded the model from the server');
+		} catch (error) {
+			outputChannel.appendLine('Failed to download the model from the server');
+			throw error;
+		}
+
+		// Print the output upon completion
+		outputChannel.appendLine('Assignment consolidation of ' + modelFileName + ' complete');
+		outputChannel.appendLine(JSON.stringify(output, null, 2));
+	} catch (error) {
+		// Print the error if a request fails
+		outputChannel.appendLine(JSON.stringify(error, null, 2));
+	} finally {
+		// Delete the model and data from the server
+		try { await deleteFile(serverConfig, modelTempName); } catch { }
+		try { await deleteFile(serverConfig, dataTempName); } catch { }
+		underProcessing.splice(underProcessing.indexOf(modelPath));
+	}
+}
+
+/**
  * Get the server configuration
  */
 function getServerConfig(): any {
@@ -412,6 +510,21 @@ function enhanceModel(serverConfig: any, modelFileName: string, dataFileName: st
 		host: serverConfig.domainName,
 		port: serverConfig.publicPort,
 		path: '/dec-tool/enhance?model_filename=' + modelFileName + '&data_filename=' + dataFileName,
+		method: 'PATCH',
+		headers: {
+			'Content-Length': 0
+		}
+	});
+}
+
+/**
+ * Consolidate the assignment of a RADON model
+ */
+function consolidateModel(serverConfig: any, modelFileName: string, dataFileName: string): Promise<any> {
+	return sendRequest({
+		host: serverConfig.domainName,
+		port: serverConfig.publicPort,
+		path: '/dec-tool/consolidate?model_filename=' + modelFileName + '&data_filename=' + dataFileName,
 		method: 'PATCH',
 		headers: {
 			'Content-Length': 0
